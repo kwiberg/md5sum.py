@@ -56,8 +56,12 @@ class TreeHash(object):
         except ValueError:
             print('Malformed cachefile', file = sys.stderr)
     def write_cachefile(self):
-        with gzip.open(self.__cachefile, 'wb') as f:
-            pickle.dump(self.__cache, f)
+        try:
+            with gzip.open(self.__cachefile, 'wb') as f:
+                pickle.dump(self.__cache, f)
+        except IOError as e:
+            print('Could not write cachefile:\n  {}'.format(e),
+                  file = sys.stderr)
     def hash_file(self, fn):
         '''Return the hash of a single file (path given relative to
         the TreeHash's root directory.)'''

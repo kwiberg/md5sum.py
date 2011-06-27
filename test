@@ -92,4 +92,14 @@ diff -u - t5.stderr <<EOF
 Cannot use cachefile (unsupported version: -1)
 EOF
 
+# Cache file in nonexisting directory.
+mkdir t6
+setup_files t6
+$P t6 /doesntexist/t6.md5cache > t6.md5sum 2> t6.stderr
+verify_output t6.md5sum
+diff -u - t6.stderr <<EOF
+Could not write cachefile:
+  [Errno 2] No such file or directory: '/doesntexist/t6.md5cache'
+EOF
+
 printf "Done\n"
