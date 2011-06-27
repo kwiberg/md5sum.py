@@ -26,14 +26,14 @@ cd $T
 # Basic operation.
 mkdir t0
 setup_files t0
-$P t0 t0.md5cache > t0.md5sum
+$P t0 -C t0.md5cache > t0.md5sum
 verify_output t0.md5sum
 
 # Garbage cache file.
 mkdir t1
 printf garbage > t1.md5cache
 setup_files t1
-$P t1 t1.md5cache > t1.md5sum 2> t1.stderr
+$P t1 -C t1.md5cache > t1.md5sum 2> t1.stderr
 verify_output t1.md5sum
 diff -u - t1.stderr <<EOF
 Could not load cachefile:
@@ -44,7 +44,7 @@ EOF
 mkdir t2
 printf garbage | gzip > t2.md5cache
 setup_files t2
-$P t2 t2.md5cache > t2.md5sum 2> t2.stderr
+$P t2 -C t2.md5cache > t2.md5sum 2> t2.stderr
 verify_output t2.md5sum
 diff -u - t2.stderr <<EOF
 Malformed cachefile
@@ -58,7 +58,7 @@ with gzip.open('t3.md5cache', 'wb') as f:
     pickle.dump([5, 'foo'], f)
 EOF
 setup_files t3
-$P t3 t3.md5cache > t3.md5sum 2> t3.stderr
+$P t3 -C t3.md5cache > t3.md5sum 2> t3.stderr
 verify_output t3.md5sum
 diff -u - t3.stderr <<EOF
 Malformed cachefile
@@ -72,7 +72,7 @@ with gzip.open('t4.md5cache', 'wb') as f:
     pickle.dump([0x4711, 'foo', 'bar'], f)
 EOF
 setup_files t4
-$P t4 t4.md5cache > t4.md5sum 2> t4.stderr
+$P t4 -C t4.md5cache > t4.md5sum 2> t4.stderr
 verify_output t4.md5sum
 diff -u - t4.stderr <<EOF
 Malformed cachefile (wrong magic number)
@@ -86,7 +86,7 @@ with gzip.open('t5.md5cache', 'wb') as f:
     pickle.dump([0x7206fab738a48740bed257c1a9eb72d8, -1, 'foo'], f)
 EOF
 setup_files t5
-$P t5 t5.md5cache > t5.md5sum 2> t5.stderr
+$P t5 -C t5.md5cache > t5.md5sum 2> t5.stderr
 verify_output t5.md5sum
 diff -u - t5.stderr <<EOF
 Cannot use cachefile (unsupported version: -1)
@@ -95,7 +95,7 @@ EOF
 # Cache file in nonexisting directory.
 mkdir t6
 setup_files t6
-$P t6 /doesntexist/t6.md5cache > t6.md5sum 2> t6.stderr
+$P t6 -C /doesntexist/t6.md5cache > t6.md5sum 2> t6.stderr
 verify_output t6.md5sum
 diff -u - t6.stderr <<EOF
 Could not write cachefile:
@@ -105,9 +105,9 @@ EOF
 # Test that cachefiles can be read back.
 mkdir t7
 setup_files t7
-$P t7 t7.md5cache > t7.md5sum
+$P t7 -C t7.md5cache > t7.md5sum
 verify_output t7.md5sum
-$P t7 t7.md5cache > t7.md5sum
+$P t7 -C t7.md5cache > t7.md5sum
 verify_output t7.md5sum
 
 printf "Done\n"

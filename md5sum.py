@@ -5,6 +5,7 @@ import binascii
 import errno
 import gzip
 import hashlib
+import optparse
 import os
 import os.path as op
 import pickle
@@ -36,6 +37,8 @@ class TreeHash(object):
         self.__read_cachefile()
     def __read_cachefile(self):
         assert not self.__cache
+        if not self.__cachefile:
+            return
         try:
             with gzip.open(self.__cachefile, 'rb') as f:
                 (magic, version, cache) = pickle.load(f)
@@ -56,6 +59,8 @@ class TreeHash(object):
         except ValueError:
             print('Malformed cachefile', file = sys.stderr)
     def write_cachefile(self):
+        if not self.__cachefile:
+            return
         try:
             with gzip.open(self.__cachefile, 'wb') as f:
                 pickle.dump([cachefile_magic, cachefile_version,
@@ -95,11 +100,18 @@ class TreeHash(object):
         for fn in sorted(self.__iter_files(subdir)):
             yield (fn, self.hash_file(fn))
 
-def main(rootdir, cachefile):
-    th = TreeHash(rootdir, cachefile)
+def main():
+    parser = optparse.OptionParser()
+    parser.add_option(
+        '-C', '--cachefile', help = 'cache md5sums in FILE', metavar = 'FILE')
+    (options, args) = parser.parse_args()
+    if len(args) != 1:
+        print('Must specify exactly one directory', file = sys.stderr)
+    [rootdir] = [a.encode() for a in args]
+    th = TreeHash(rootdir, options.cachefile)
     for (fn, h) in th.hash_dir():
         print('{}  {}'.format(binascii.hexlify(h).decode(), fn.decode()))
     th.write_cachefile()
 
 if __name__ == '__main__':
-    main(sys.argv[1].encode(), sys.argv[2])
+    main()
