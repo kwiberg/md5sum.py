@@ -10,6 +10,9 @@ import os.path as op
 import pickle
 import time
 
+cachefile_magic = 0x7206fab738a48740bed257c1a9eb72d8
+cachefile_version = 0
+
 def stat(f):
     '''Return a tuple of stat numbers that should change whenever the
     file contents change.'''
@@ -35,13 +38,23 @@ class TreeHash(object):
         assert not self.__cache
         try:
             with gzip.open(self.__cachefile, 'rb') as f:
-                self.__cache = pickle.load(f)
+                (magic, version, cache) = pickle.load(f)
+            if magic != cachefile_magic:
+                print('Malformed cachefile (wrong magic number)',
+                      file = sys.stderr)
+            elif version != cachefile_version:
+                print('Cannot use cachefile (unsupported version: {})'
+                      .format(version), file = sys.stderr)
+            else:
+                self.__cache = cache
         except IOError as e:
             if e.errno == errno.ENOENT:
                 pass # cachefile doesn't exist, but that's OK
             else:
                 print('Could not load cachefile:\n  {}'.format(e),
                       file = sys.stderr)
+        except ValueError:
+            print('Malformed cachefile', file = sys.stderr)
     def write_cachefile(self):
         with gzip.open(self.__cachefile, 'wb') as f:
             pickle.dump(self.__cache, f)

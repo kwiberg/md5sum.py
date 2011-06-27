@@ -3,16 +3,93 @@
 P="python3 $(pwd)/md5sum.py"
 T=test-directory
 
+setup_files ()
+{
+    d=$1
+    printf abcd > $d/x
+    mkdir $d/bar
+    printf 1234 > $d/bar/y
+}
+
+verify_output ()
+{
+    diff -u - $1 <<EOF
+81dc9bdb52d04dc20036dbd8313ed055  bar/y
+e2fc714c4727ee9395f324cd2e7f331f  x
+EOF
+}
+
 rm -rf $T
 mkdir $T
 cd $T
 
-mkdir foo
-printf abcd > foo/x
-mkdir foo/bar
-printf 1234 > foo/bar/y
-$P foo foo.md5cache > foo.md5sum
-diff -u - foo.md5sum <<EOF
-81dc9bdb52d04dc20036dbd8313ed055  bar/y
-e2fc714c4727ee9395f324cd2e7f331f  x
+# Basic operation.
+mkdir t0
+setup_files t0
+$P t0 t0.md5cache > t0.md5sum
+verify_output t0.md5sum
+
+# Garbage cache file.
+mkdir t1
+printf garbage > t1.md5cache
+setup_files t1
+$P t1 t1.md5cache > t1.md5sum 2> t1.stderr
+verify_output t1.md5sum
+diff -u - t1.stderr <<EOF
+Could not load cachefile:
+  Not a gzipped file
 EOF
+
+# Garbage cache file (gzipped).
+mkdir t2
+printf garbage | gzip > t2.md5cache
+setup_files t2
+$P t2 t2.md5cache > t2.md5sum 2> t2.stderr
+verify_output t2.md5sum
+diff -u - t2.stderr <<EOF
+Malformed cachefile
+EOF
+
+# Garbage cache file (gzipped pickle data).
+mkdir t3
+python3 <<EOF
+import gzip, pickle
+with gzip.open('t3.md5cache', 'wb') as f:
+    pickle.dump([5, 'foo'], f)
+EOF
+setup_files t3
+$P t3 t3.md5cache > t3.md5sum 2> t3.stderr
+verify_output t3.md5sum
+diff -u - t3.stderr <<EOF
+Malformed cachefile
+EOF
+
+# Garbage cache file (wrong magic).
+mkdir t4
+python3 <<EOF
+import gzip, pickle
+with gzip.open('t4.md5cache', 'wb') as f:
+    pickle.dump([0x4711, 'foo', 'bar'], f)
+EOF
+setup_files t4
+$P t4 t4.md5cache > t4.md5sum 2> t4.stderr
+verify_output t4.md5sum
+diff -u - t4.stderr <<EOF
+Malformed cachefile (wrong magic number)
+EOF
+
+# Garbage cache file (wrong version).
+mkdir t5
+python3 <<EOF
+import gzip, pickle
+with gzip.open('t5.md5cache', 'wb') as f:
+    pickle.dump([0x7206fab738a48740bed257c1a9eb72d8, -1, 'foo'], f)
+EOF
+setup_files t5
+$P t5 t5.md5cache > t5.md5sum 2> t5.stderr
+verify_output t5.md5sum
+diff -u - t5.stderr <<EOF
+Cannot use cachefile (unsupported version: -1)
+EOF
+
+printf "Done\n"
