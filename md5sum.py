@@ -2,6 +2,7 @@ import sys
 assert sys.version_info >= (3, 1)
 
 import binascii
+import errno
 import gzip
 import hashlib
 import os
@@ -36,8 +37,11 @@ class TreeHash(object):
             with gzip.open(self.__cachefile, 'rb') as f:
                 self.__cache = pickle.load(f)
         except IOError as e:
-            print('Could not load cachefile:\n  {}'.format(e),
-                  file = sys.stderr)
+            if e.errno == errno.ENOENT:
+                pass # cachefile doesn't exist, but that's OK
+            else:
+                print('Could not load cachefile:\n  {}'.format(e),
+                      file = sys.stderr)
     def write_cachefile(self):
         with gzip.open(self.__cachefile, 'wb') as f:
             pickle.dump(self.__cache, f)
