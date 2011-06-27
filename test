@@ -1,0 +1,18 @@
+#!/bin/sh
+
+P="python3 $(pwd)/md5sum.py"
+T=test-directory
+
+rm -rf $T
+mkdir $T
+cd $T
+
+mkdir foo
+printf abcd > foo/x
+mkdir foo/bar
+printf 1234 > foo/bar/y
+$P foo foo.md5cache > foo.md5sum
+diff -u - foo.md5sum <<EOF
+81dc9bdb52d04dc20036dbd8313ed055  bar/y
+e2fc714c4727ee9395f324cd2e7f331f  x
+EOF
