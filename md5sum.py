@@ -58,7 +58,8 @@ class TreeHash(object):
     def write_cachefile(self):
         try:
             with gzip.open(self.__cachefile, 'wb') as f:
-                pickle.dump(self.__cache, f)
+                pickle.dump([cachefile_magic, cachefile_version,
+                             self.__cache], f)
         except IOError as e:
             print('Could not write cachefile:\n  {}'.format(e),
                   file = sys.stderr)

@@ -102,4 +102,12 @@ Could not write cachefile:
   [Errno 2] No such file or directory: '/doesntexist/t6.md5cache'
 EOF
 
+# Test that cachefiles can be read back.
+mkdir t7
+setup_files t7
+$P t7 t7.md5cache > t7.md5sum
+verify_output t7.md5sum
+$P t7 t7.md5cache > t7.md5sum
+verify_output t7.md5sum
+
 printf "Done\n"
