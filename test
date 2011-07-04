@@ -29,7 +29,7 @@ setup_files t0
 $P t0 -C t0.md5cache > t0.md5sum
 verify_output t0.md5sum
 
-# Garbage cache file.
+# Garbage cache file (short).
 mkdir t1
 printf garbage > t1.md5cache
 setup_files t1
@@ -37,59 +37,64 @@ $P t1 -C t1.md5cache > t1.md5sum 2> t1.stderr
 verify_output t1.md5sum
 diff -u - t1.stderr <<EOF
 Could not load cachefile:
-  Not a gzipped file
+  Could not read file header
 EOF
 
-# Garbage cache file (gzipped).
+# Garbage cache file (longer).
 mkdir t2
-printf garbage | gzip > t2.md5cache
+printf garbagegarbagegarbage > t2.md5cache
 setup_files t2
 $P t2 -C t2.md5cache > t2.md5sum 2> t2.stderr
 verify_output t2.md5sum
 diff -u - t2.stderr <<EOF
-Malformed cachefile
+Could not load cachefile:
+  Wrong magic number (expected 0x7206fab738a48740, got 0x6765676162726167)
 EOF
 
-# Garbage cache file (gzipped pickle data).
+# Garbage cache file (decryption error).
 mkdir t3
 python3 <<EOF
-import gzip, pickle
-with gzip.open('t3.md5cache', 'wb') as f:
-    pickle.dump([5, 'foo'], f)
+import struct
+with open('t3.md5cache', 'wb') as f:
+    f.write(struct.pack('<QL', 0x7206fab738a48740, 4711))
 EOF
 setup_files t3
 $P t3 -C t3.md5cache > t3.md5sum 2> t3.stderr
 verify_output t3.md5sum
 diff -u - t3.stderr <<EOF
-Malformed cachefile
+Could not load cachefile:
+  Error -5 while decompressing data
 EOF
 
-# Garbage cache file (wrong magic).
+# Garbage cache file (wrong version).
 mkdir t4
 python3 <<EOF
-import gzip, pickle
-with gzip.open('t4.md5cache', 'wb') as f:
-    pickle.dump([0x4711, 'foo', 'bar'], f)
+import struct, zlib
+with open('t4.md5cache', 'wb') as f:
+    f.write(struct.pack('<QL', 0x7206fab738a48740, 4711))
+    f.write(zlib.compress(b'foobar'))
 EOF
 setup_files t4
 $P t4 -C t4.md5cache > t4.md5sum 2> t4.stderr
 verify_output t4.md5sum
 diff -u - t4.stderr <<EOF
-Malformed cachefile (wrong magic number)
+Could not load cachefile:
+  Unsupported version (4711)
 EOF
 
-# Garbage cache file (wrong version).
+# Garbage cache file (pickle error).
 mkdir t5
 python3 <<EOF
-import gzip, pickle
-with gzip.open('t5.md5cache', 'wb') as f:
-    pickle.dump([0x7206fab738a48740bed257c1a9eb72d8, -1, 'foo'], f)
+import pickle, struct, zlib
+with open('t5.md5cache', 'wb') as f:
+    f.write(struct.pack('<QL', 0x7206fab738a48740, 0))
+    f.write(zlib.compress(b'foobar'))
 EOF
 setup_files t5
 $P t5 -C t5.md5cache > t5.md5sum 2> t5.stderr
 verify_output t5.md5sum
 diff -u - t5.stderr <<EOF
-Cannot use cachefile (unsupported version: -1)
+Malformed cachefile
 EOF
 
 # Cache file in nonexisting directory.
