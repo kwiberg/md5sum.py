@@ -2,17 +2,17 @@ import sys
 assert sys.version_info >= (3, 1)
 
 import binascii
-import datafile
 import errno
 import gzip
 import hashlib
+import hsum.datafile as hd
 import optparse
 import os
 import os.path as op
 import pickle
 import time
 
-class Cachefile(datafile.Datafile):
+class Cachefile(hd.Datafile):
     magic = 0x7206fab738a48740
     version = 0
     @classmethod
@@ -21,8 +21,7 @@ class Cachefile(datafile.Datafile):
     @classmethod
     def decode(cls, version, data):
         if version != 0:
-            raise datafile.DatafileError(
-                'Unsupported version ({})'.format(version))
+            raise hd.DatafileError('Unsupported version ({})'.format(version))
         return pickle.loads(data)
 
 def stat(f):
@@ -52,7 +51,7 @@ class TreeHash(object):
             return
         try:
             self.__cache = Cachefile.read(self.__cachefile)
-        except datafile.DatafileError as e:
+        except hd.DatafileError as e:
             print('Could not load cachefile:\n  {}'.format(e),
                   file = sys.stderr)
         except IOError as e:

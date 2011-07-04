@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+# -*- python -*-
+
+from hsum.hashsum import main
+main()

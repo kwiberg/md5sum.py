@@ -1,6 +1,6 @@
 #!/bin/sh
 
-P="python3 $(pwd)/md5sum.py"
+P="$(pwd)/hashsum"
 T=test-directory
 
 setup_files ()
