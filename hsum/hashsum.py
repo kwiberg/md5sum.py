@@ -1,6 +1,3 @@
-import sys
-assert sys.version_info >= (3, 1)
-
 import binascii
 import errno
 import gzip
@@ -10,6 +7,7 @@ import optparse
 import os
 import os.path as op
 import pickle
+import sys
 import time
 
 class Cachefile(hd.Datafile):
