@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # -*- python -*-
-
+import sys, os.path
+(prefix, bin) = os.path.split(sys.path[0])
+if bin == 'bin' and prefix != sys.prefix:
+    pyver = 'python{0.major}.{0.minor}'.format(sys.version_info)
+    sys.path += [os.path.join(prefix, 'lib', 'python'),
+                 os.path.join(prefix, 'lib', pyver),
+                 os.path.join(prefix, 'lib', pyver, 'site-packages')]
 from hsum.hashsum import main
 main()
