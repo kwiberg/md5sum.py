@@ -107,6 +107,7 @@ def main():
     (options, args) = parser.parse_args()
     if len(args) != 1:
         print('Must specify exactly one directory', file = sys.stderr)
+        sys.exit(1)
     [rootdir] = [a.encode() for a in args]
     th = TreeHash(rootdir, options.cachefile)
     for (fn, h) in th.hash_dir():
